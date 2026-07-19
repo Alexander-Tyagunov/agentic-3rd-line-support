@@ -24,6 +24,9 @@ pub async fn run_monitoring(State(st): State<AppState>) -> Result<Json<Value>, A
         .http
         .post(format!("{base}/sweep?trigger=manual"))
         .bearer_auth(token)
+        // Empty body → Content-Length: 0. Cloud Run's front end returns 411 on a
+        // POST with no Content-Length header, so send an explicit empty body.
+        .body("")
         .send()
         .await?;
     let code = resp.status();

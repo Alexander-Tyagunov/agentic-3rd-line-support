@@ -39,6 +39,10 @@ jobs:
 
       - name: Run Gemini CLI
         uses: google-github-actions/run-gemini-cli@v0.1.22
+        env:
+          # Trust the checked-out workspace in headless CI — otherwise the Gemini
+          # CLI refuses to run tools ("not running in a trusted directory").
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           use_vertex_ai: true
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
