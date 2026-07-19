@@ -80,9 +80,11 @@ def record_run(
             "agent": "triage",
             "status": status,
             "trigger": "pubsub",
-            "summary": summary,
-            "error": error,
-            "detail": detail,
+            # Cap free-text — the model can occasionally loop/repeat, which would
+            # otherwise bloat the doc and the console's Runs view.
+            "summary": summary[:280],
+            "error": error[:500],
+            "detail": detail[:200],
             "count": 0,
             "started_at": started_at,
             "finished_at": datetime.now(timezone.utc).isoformat(),

@@ -127,7 +127,7 @@
       /* clickable ticket link inside the ledger */
       .tlink { color: var(--blue); cursor: pointer; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
       .tlink:hover { text-decoration: underline; }
-      td.reason { max-width: 460px; }
+      td.reason { max-width: 460px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 
       /* action cell */
       .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

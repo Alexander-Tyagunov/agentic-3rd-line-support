@@ -47,8 +47,10 @@ def record_run(
             "agent": "monitoring",
             "status": status,
             "trigger": trigger,
-            "summary": summary,
-            "error": error,
+            # Cap free-text — the model can occasionally loop/repeat, which would
+            # otherwise bloat the doc and the console's Runs view.
+            "summary": summary[:280],
+            "error": error[:500],
             "count": count,
             "started_at": started_at,
             "finished_at": datetime.now(timezone.utc).isoformat(),
