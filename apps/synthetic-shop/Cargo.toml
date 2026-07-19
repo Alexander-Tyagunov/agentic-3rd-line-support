@@ -1,0 +1,31 @@
+[package]
+name = "synthetic-shop"
+version = "0.1.0"
+edition = "2021"
+description = "Fake e-commerce service that floods business-meaningful logs and injects failure scenarios."
+license = "MIT"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Lints follow magician rust lore: a server process must never panic; use `?`.
+[lints.clippy]
+all = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+print_stdout = "deny"  # we emit via writeln! to a locked stdout handle
+print_stderr = "deny"
+indexing_slicing = "deny"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true

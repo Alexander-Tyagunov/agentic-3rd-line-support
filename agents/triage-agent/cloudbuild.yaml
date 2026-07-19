@@ -1,0 +1,10 @@
+# Build the triage-agent image with the REPO ROOT as build context (so grounding/
+# is bundled). Submit from the repo root:
+#   gcloud builds submit . --config=agents/triage-agent/cloudbuild.yaml \
+#     --substitutions=_IMAGE=REGION-docker.pkg.dev/PROJECT/REPO/triage-agent:latest
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "agents/triage-agent/Dockerfile", "-t", "${_IMAGE}", "."]
+images: ["${_IMAGE}"]
+options:
+  logging: CLOUD_LOGGING_ONLY

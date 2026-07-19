@@ -1,0 +1,12 @@
+[build]
+dist = "dist"
+
+# Local dev: proxy /api and /pubsub to the backend so the UI can call it.
+#   trunk serve
+[[proxy]]
+rewrite = "/api/"
+backend = "http://localhost:8080/api/"
+
+[[proxy]]
+rewrite = "/pubsub/"
+backend = "http://localhost:8080/pubsub/"

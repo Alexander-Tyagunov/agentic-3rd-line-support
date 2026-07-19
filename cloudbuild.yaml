@@ -1,0 +1,56 @@
+# Reusable build+deploy pipeline for ONE service, selected via substitutions.
+# One Cloud Build trigger per service points at this file with different
+# _SERVICE / _IMAGE / _CONTEXT / _DOCKERFILE values (see terraform/cloudbuild.tf),
+# and each trigger is path-filtered so only the changed app rebuilds.
+#
+# Images are tagged with the immutable commit SHA (what actually gets deployed —
+# no "moving :latest" surprises) and also with :latest for convenience.
+
+substitutions:
+  _REGION: "us-central1"
+  _IMAGE: "" # Artifact Registry image name, e.g. "ticket-backend"
+  _SERVICE: "" # Cloud Run service name, e.g. "a3l-ticket-backend"
+  _CONTEXT: "." # docker build context (dir), relative to repo root
+  _DOCKERFILE: "Dockerfile" # Dockerfile path, relative to repo root
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - ${_DOCKERFILE}
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/a3l-images/${_IMAGE}:${SHORT_SHA}
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/a3l-images/${_IMAGE}:latest
+      - ${_CONTEXT}
+
+  - id: push-sha
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/a3l-images/${_IMAGE}:${SHORT_SHA}"]
+
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/a3l-images/${_IMAGE}:latest"]
+
+  # Deploy the immutable SHA image — updates only the container image, preserving
+  # the service's env vars, service account, scaling, and ingress.
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/a3l-images/${_IMAGE}:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --quiet
+
+# A user/compute service account can't write to the default logs bucket, so keep
+# build logs in Cloud Logging only.
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s

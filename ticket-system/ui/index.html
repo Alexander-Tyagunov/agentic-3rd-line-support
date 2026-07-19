@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>3rd-line support console</title>
+    <link data-trunk rel="rust" data-wasm-opt="z" />
+    <style>
+      :root {
+        --bg: #0f1220;
+        --bg2: #151a2e;
+        --panel: #1b2138;
+        --panel2: #212844;
+        --border: #2c3555;
+        --text: #e7eaf6;
+        --muted: #9aa3c7;
+        --accent: #6d7cff;
+        --accent2: #8b5cf6;
+        --green: #34d399;
+        --amber: #fbbf24;
+        --red: #f87171;
+        --blue: #60a5fa;
+        --gray: #7c85a8;
+        font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: radial-gradient(1200px 600px at 20% -10%, #1c2140 0%, var(--bg) 55%); color: var(--text); }
+      a { color: var(--blue); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      header {
+        position: sticky; top: 0; z-index: 10;
+        backdrop-filter: blur(8px);
+        background: rgba(15,18,32,0.75);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 24px;
+      }
+      .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .brand { display: flex; align-items: center; gap: 13px; }
+      .logo {
+        width: 34px; height: 34px; border-radius: 10px; flex: none;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        box-shadow: 0 0 18px rgba(109,124,255,0.5);
+      }
+      h1 { font-size: 17px; margin: 0; letter-spacing: 0.2px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+      .accent-pill {
+        font-size: 12px; font-weight: 700; letter-spacing: .3px; color: #fff;
+        padding: 2px 10px; border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        box-shadow: 0 4px 14px rgba(109,124,255,.35);
+      }
+      .pipeline { display: flex; align-items: center; gap: 7px; margin-top: 7px; flex-wrap: wrap; }
+      .pipeline .step { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 7px; background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
+      .pipeline .arrow { color: var(--muted); font-size: 12px; }
+      .pipeline .meta { color: var(--muted); font-size: 12px; }
+      .refresh-btn { padding: 8px 15px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); color: var(--muted); cursor: pointer; font-size: 13px; transition: all .15s ease; white-space: nowrap; }
+      .refresh-btn:hover { color: var(--text); border-color: var(--accent); }
+      .sub { color: var(--muted); font-size: 12px; margin-top: 1px; }
+      nav { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+      nav button {
+        padding: 7px 14px; border: 1px solid var(--border); border-radius: 999px;
+        background: var(--panel); color: var(--muted); cursor: pointer; font-size: 13px;
+        transition: all .15s ease;
+      }
+      nav button:hover { color: var(--text); border-color: var(--accent); }
+      nav button.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(109,124,255,0.35); }
+      nav .spacer { flex: 1; }
+
+      main { padding: 22px 24px; max-width: 1200px; margin: 0 auto; }
+      h2 { font-size: 15px; margin: 4px 0 14px; }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 4px; overflow: hidden; }
+      table { border-collapse: collapse; width: 100%; font-size: 13px; }
+      th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      thead th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr:hover { background: var(--panel2); }
+      tr.clickable { cursor: pointer; }
+      code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #c7d0f5; }
+
+      .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+      .sev-S1 { background: rgba(248,113,113,.18); color: var(--red); }
+      .sev-S2 { background: rgba(251,191,36,.18); color: var(--amber); }
+      .sev-S3 { background: rgba(96,165,250,.16); color: var(--blue); }
+      .sev-S4 { background: rgba(124,133,168,.18); color: var(--gray); }
+      .out-ticketed, .st-merged { background: rgba(52,211,153,.16); color: var(--green); }
+      .out-duplicate_closed { background: rgba(96,165,250,.16); color: var(--blue); }
+      .out-ignored, .st-declined { background: rgba(124,133,168,.18); color: var(--gray); }
+      .st-proposed { background: rgba(251,191,36,.18); color: var(--amber); }
+      .st-issue_created, .st-approved, .st-pr_opened { background: rgba(96,165,250,.16); color: var(--blue); }
+
+      button.btn { padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel2); color: var(--text); cursor: pointer; font-size: 13px; transition: all .15s; }
+      button.btn:hover { border-color: var(--accent); }
+      button.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: white; font-weight: 600; }
+      button.primary:hover { filter: brightness(1.08); }
+      button.danger { border-color: rgba(248,113,113,.5); color: var(--red); }
+      button.danger:hover { background: rgba(248,113,113,.12); }
+
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+      .tile { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+      .tile h3 { margin: 0 0 4px; font-size: 14px; }
+      .tile p { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+      .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .muted { color: var(--muted); }
+      .status-line { color: var(--muted); font-size: 12px; min-height: 18px; margin: 8px 2px; }
+
+      .detail { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+      .detail h2 { font-size: 18px; margin: 0 0 4px; }
+      .detail section { margin-top: 18px; }
+      .detail section h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+      .detail pre { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; overflow: auto; font-size: 12.5px; color: #d7deff; white-space: pre-wrap; }
+      .kv { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+      .dot.ok { background: var(--green); box-shadow: 0 0 8px var(--green); }
+      .dot.warn { background: var(--amber); }
+      input[type="number"] { width: 90px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); }
+      .hint { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+      .hint code { color: #c7d0f5; }
+
+      /* event filter pills */
+      .filters { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
+      .chip { padding: 6px 13px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); color: var(--muted); cursor: pointer; font-size: 12.5px; transition: all .15s ease; }
+      .chip:hover { color: var(--text); border-color: var(--accent); }
+      .chip.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-color: transparent; box-shadow: 0 4px 14px rgba(109,124,255,.3); }
+      .chip .n { margin-left: 7px; opacity: .75; font-variant-numeric: tabular-nums; }
+
+      /* clickable ticket link inside the ledger */
+      .tlink { color: var(--blue); cursor: pointer; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+      .tlink:hover { text-decoration: underline; }
+      td.reason { max-width: 460px; }
+
+      /* action cell */
+      .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      button.btn.ghost { background: transparent; }
+      button.btn:disabled { opacity: .5; cursor: default; }
+      .badge.agent { background: rgba(96,165,250,.16); color: var(--blue); display: inline-flex; align-items: center; gap: 6px; }
+      .badge.agent .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 0 rgba(96,165,250,.6); animation: pulse 1.6s infinite; }
+      @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(96,165,250,.55); } 70% { box-shadow: 0 0 0 6px rgba(96,165,250,0); } 100% { box-shadow: 0 0 0 0 rgba(96,165,250,0); } }
+
+      /* tooltips + the console row in Ops */
+      .help { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+      .svc-console code { font-weight: 800; color: var(--text); }
+      .tag { font-size: 10px; font-weight: 700; letter-spacing: .3px; padding: 2px 7px; border-radius: 6px; background: rgba(109,124,255,.18); color: var(--accent); margin-left: 8px; text-transform: uppercase; }
+
+      /* agent run strip + run badges */
+      .run-strip { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; flex-wrap: wrap; }
+      .run-strip .spacer { flex: 1; }
+      .badge.run-success { background: rgba(52,211,153,.16); color: var(--green); }
+      .badge.run-error { background: rgba(248,113,113,.18); color: var(--red); }
+      td.nowrap { white-space: nowrap; }
+
+      /* footer */
+      footer { max-width: 1200px; margin: 44px auto 26px; padding: 18px 24px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: 12.5px; text-align: center; }
+      footer a { color: var(--blue); }
+      .foot-brand { color: var(--text); font-weight: 600; }
+    </style>
+  </head>
+  <body></body>
+</html>

@@ -1,0 +1,59 @@
+# Coding agent: implements an `agent-bug` issue and opens a PR, using Gemini via
+# the Gemini CLI GitHub Action. Auth to Vertex AI is via Workload Identity
+# Federation (no keys). The human gate is the PR review — this never merges.
+#
+# Required repo secrets (from `terraform output`):
+#   GCP_WORKLOAD_IDENTITY_PROVIDER  -> github_workload_identity_provider
+#   GCP_SERVICE_ACCOUNT             -> github_actions_service_account
+#   GCP_PROJECT_ID                  -> your project id (e.g. agentic-3rd-line-support)
+
+name: Coding Agent (Gemini)
+
+on:
+  issues:
+    types: [opened, labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write # required for Workload Identity Federation
+
+concurrency:
+  group: coding-agent-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  gemini:
+    # Run for issues labeled `agent-bug`, or a human `@gemini-cli` mention.
+    if: |
+      (github.event_name == 'issues' && contains(join(github.event.issue.labels.*.name, ','), 'agent-bug')) ||
+      (github.event_name == 'issue_comment' && github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '@gemini-cli'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20 # cost guard
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Gemini CLI
+        uses: google-github-actions/run-gemini-cli@v0.1.22
+        with:
+          use_vertex_ai: true
+          gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          gcp_location: us-central1
+          # For simplicity single flash GA model is used.
+          gemini_model: gemini-3.5-flash
+          github_issue_number: ${{ github.event.issue.number }}
+          # This is just a sample prompt that could be used here for demo purposes.
+          prompt: |
+            Read GEMINI.md / CLAUDE.md and the runbook referenced in grounding/.
+            Find the root cause and implement the SMALLEST correct fix for the
+            defect in this issue — change only what the ticket describes. Add or
+            update a test that fails before the fix and passes after. Run the
+            relevant checks (cargo test + clippy for Rust, pytest for Python).
+            Open a pull request that explains the root cause and cites the ticket
+            evidence. Do NOT merge — a human reviews the PR.

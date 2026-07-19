@@ -1,0 +1,28 @@
+[project]
+name = "monitoring-agent"
+version = "0.1.0"
+description = "Sweeps Cloud Logging for known and emergent risky patterns; emits findings."
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai>=1.0",
+    "google-cloud-logging>=3.0",
+    "google-cloud-pubsub>=2.0",
+    "google-cloud-firestore>=2.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

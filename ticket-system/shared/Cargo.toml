@@ -1,0 +1,9 @@
+[package]
+name = "ticket-shared"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Shared serde types for the ticket backend and WASM UI."
+
+[dependencies]
+serde = { workspace = true }

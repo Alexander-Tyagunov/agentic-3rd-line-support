@@ -1,0 +1,49 @@
+# ---- Secrets & local config (NEVER commit) ----
+*.tfvars
+!*.tfvars.example
+*.auto.tfvars
+.env
+.env.*
+*.pem
+*-key.json
+service-account*.json
+credentials.json
+
+# ---- Terraform ----
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+
+# ---- Rust ----
+target/
+**/*.rs.bk
+Cargo.lock
+dist/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.uv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ---- Editors / OS ----
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ---- Agent / local session scratch ----
+.workspace/
+.claude/settings.local.json
+
+# ---- Personal lecture materials (NEVER push — hard rule) ----
+lecture/

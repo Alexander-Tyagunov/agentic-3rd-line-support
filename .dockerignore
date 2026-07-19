@@ -1,0 +1,11 @@
+.git
+**/target
+**/.terraform
+**/dist
+**/.venv
+**/__pycache__
+**/node_modules
+.workspace
+*.tfstate*
+*.tfvars
+!*.tfvars.example

@@ -1,0 +1,29 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored.
+# NEVER put secret VALUES in a committed file.
+
+project_id = "agentic-3rd-line-support" # your GCP project id
+region     = "us-central1"
+
+# Vertex AI location + Gemini models (first-party; no Model Garden EULA)
+gemini_location         = "global"
+gemini_model_monitoring = "gemini-3.1-flash-lite"
+gemini_model_triage     = "gemini-3.5-flash"
+
+# GitHub repo that holds this project (owner/repo)
+github_owner = "your-github-username"
+github_repo  = "agentic-3rd-line-support"
+
+# The GitHub token used by the ticket backend to open Issues.
+# DO NOT put it here. Instead export it before apply:
+#   export TF_VAR_github_token=ghp_xxx
+# (or leave it out entirely and add the Secret Manager version manually).
+
+# Cost guard (optional but recommended)
+billing_account   = "" # e.g. "01ABCD-2345EF-6789AB"; empty = skip budget alert
+budget_amount_usd = 50
+
+# Continuous deployment: per-service, path-filtered Cloud Build triggers that
+# build + deploy on push to main. Requires a one-time repo connect via the
+# Cloud Build GitHub App (Console → Cloud Build → Triggers → Connect repository).
+# See docs/setup.md §13.
+enable_cloudbuild_deploy = false
