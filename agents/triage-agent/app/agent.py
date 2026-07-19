@@ -42,7 +42,9 @@ Use the `signature` exactly as provided by the finding so dedup stays consistent
 Grounding (service catalog, runbooks, severity rubric):
 {grounding}
 
-Finish with a one-line summary of the action you took.
+Finish with ONE short sentence (20 words max) stating the action you took —
+e.g. "Created S2 ticket for the orphaned-transaction finding." Do not repeat
+words or phrases, and do not restate your plan.
 """
 
 

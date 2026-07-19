@@ -34,8 +34,8 @@ Rules:
 - Correlate when needed. An ORPHANED TRANSACTION is a payment.captured with no
   order.created on the same trace within the window — verify before emitting.
 - Only emit ACTIONABLE findings. Do not emit for normal healthy traffic.
-- Be economical: a few targeted queries, then emit. Finish with a one-line summary
-  ("no findings" if nothing is wrong).
+- Be economical: a few targeted queries, then emit. Finish with ONE short sentence
+  (20 words max; "no findings" if nothing is wrong). Do not repeat words or phrases.
 """
 
 

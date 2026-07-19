@@ -1,0 +1,8 @@
+# Every change to the default branch requires review from the human maintainer.
+#
+# The coding agent runs as the github-actions bot, which is NOT a code owner —
+# so it can OPEN pull requests, but its review can never satisfy the required
+# code-owner approval. A human must approve before merge. (GitHub bundles
+# "create and approve PRs" into one Actions setting, so this branch rule is how
+# we guarantee the agent can never approve/merge its own work.)
+* @Alexander-Tyagunov
