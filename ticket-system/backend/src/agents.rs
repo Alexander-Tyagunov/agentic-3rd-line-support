@@ -24,9 +24,10 @@ pub async fn run_monitoring(State(st): State<AppState>) -> Result<Json<Value>, A
         .http
         .post(format!("{base}/sweep?trigger=manual"))
         .bearer_auth(token)
-        // Empty body → Content-Length: 0. Cloud Run's front end returns 411 on a
-        // POST with no Content-Length header, so send an explicit empty body.
-        .body("")
+        // Send a tiny JSON body so reqwest emits a Content-Length header — Cloud
+        // Run's front end returns 411 on a POST without one. (`/sweep` ignores the
+        // body and reads the trigger from the query string.)
+        .json(&json!({}))
         .send()
         .await?;
     let code = resp.status();
