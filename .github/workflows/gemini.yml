@@ -69,6 +69,15 @@ jobs:
         # working tree so the PR step always sees them. No-op if it only edited.
         run: git reset --soft "${{ github.sha }}" || true
 
+      - name: Strip agent scratch + credentials
+        # The auth action + Gemini CLI drop files into the workspace (a WIF
+        # credentials file, artifact logs, .gemini command defs). Remove and
+        # unstage them so ONLY real source changes land in the PR.
+        run: |
+          rm -f gha-creds-*.json
+          rm -rf gemini-artifacts .gemini
+          git rm -r --cached --ignore-unmatch 'gha-creds-*.json' gemini-artifacts .gemini >/dev/null 2>&1 || true
+
       - name: Open pull request
         id: cpr
         uses: peter-evans/create-pull-request@v7

@@ -8,6 +8,11 @@
 *-key.json
 service-account*.json
 credentials.json
+gha-creds-*.json          # Workload Identity credential file written by google-github-actions/auth
+
+# ---- Coding-agent (GitHub Action) scratch — never belongs in a fix PR ----
+gemini-artifacts/
+.gemini/
 
 # ---- Terraform ----
 .terraform/
