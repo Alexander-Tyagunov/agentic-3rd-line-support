@@ -433,6 +433,32 @@ approval" unchecked so pushes deploy automatically.
 > duplicate triggers. If you built them by hand, keep `enable_cloudbuild_deploy =
 > false` so Terraform doesn't create a second set.
 
+### 13e · Coding-agent review gate — the agent never approves
+
+The coding agent **opens** PRs but must **never approve or merge** them — that's the
+second human gate. Two layers enforce it:
+
+- **Code (always on):** the workflow (`.github/workflows/gemini.yml`) has no
+  approve/merge step, and the prompt tells the agent to edit files only.
+- **Server-enforced (once the repo is public or on GitHub Pro):** branch protection
+  on `main` requiring a human **code-owner** approval. `CODEOWNERS` (`* @<you>`) is
+  already committed, so the bot's review can never satisfy the requirement.
+
+```bash
+gh api -X PUT "repos/$GH_OWNER/$GH_REPO/branches/main/protection" --input - <<'JSON'
+{ "required_status_checks": null, "enforce_admins": false,
+  "required_pull_request_reviews": { "required_approving_review_count": 1,
+    "require_code_owner_reviews": true, "dismiss_stale_reviews": true },
+  "restrictions": null }
+JSON
+```
+
+> [!NOTE]
+> GitHub bundles "create **and** approve PRs" into one Actions toggle, and any
+> PR-write token can approve — so branch protection is the only way to *guarantee*
+> the agent can't approve. It's unavailable on a private Free-plan repo (403:
+> "Upgrade to Pro or make public"); until then the code-level gate above holds.
+
 ---
 
 ## Appendix A — the exact commands used for the reference deployment
