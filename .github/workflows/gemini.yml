@@ -48,8 +48,9 @@ jobs:
           gcp_workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          gcp_location: us-central1
-          # For simplicity single flash GA model is used.
+          # Gemini v3 models are served from the "global" Vertex location (same as
+          # the monitoring/triage agents) — us-central1 returns 404 model-not-found.
+          gcp_location: global
           gemini_model: gemini-3.5-flash
           github_issue_number: ${{ github.event.issue.number }}
           # This is just a sample prompt that could be used here for demo purposes.
