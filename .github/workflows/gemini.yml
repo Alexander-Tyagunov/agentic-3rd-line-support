@@ -60,5 +60,49 @@ jobs:
             defect in this issue — change only what the ticket describes. Add or
             update a test that fails before the fix and passes after. Run the
             relevant checks (cargo test + clippy for Rust, pytest for Python).
-            Open a pull request that explains the root cause and cites the ticket
-            evidence. Do NOT merge — a human reviews the PR.
+            Edit files ONLY — do not run git, do not commit, and do not open a
+            pull request. The workflow opens the PR from your changes.
+
+      # --- Hard gate: the agent MUST open a PR from its changes ---
+      - name: Normalize agent changes to the working tree
+        # If the CLI committed (or branched), move those changes back to the
+        # working tree so the PR step always sees them. No-op if it only edited.
+        run: git reset --soft "${{ github.sha }}" || true
+
+      - name: Open pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          base: main
+          branch: agent-fix/issue-${{ github.event.issue.number }}
+          delete-branch: true
+          commit-message: "Coding agent: fix for #${{ github.event.issue.number }}"
+          title: "Agent fix: ${{ github.event.issue.title }} (#${{ github.event.issue.number }})"
+          body: |
+            Autonomous fix from the coding agent for issue #${{ github.event.issue.number }}.
+
+            Fixes #${{ github.event.issue.number }}
+
+            The agent implemented the smallest fix plus a regression test.
+            **Human review is the second gate — do not auto-merge.**
+
+      - name: Enforce that a PR was opened
+        if: ${{ steps.cpr.outputs.pull-request-number == '' }}
+        run: |
+          echo "::error::Coding agent produced no changes — no PR was opened."
+          exit 1
+
+      - name: Link the PR into the 3rd-line support console
+        env:
+          CONSOLE_URL: ${{ vars.CONSOLE_URL }}
+          PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          if [ -z "$CONSOLE_URL" ]; then
+            echo "::error::CONSOLE_URL variable not set — cannot surface the PR in the console."
+            exit 1
+          fi
+          curl -sS --retry 3 --max-time 30 -X POST "$CONSOLE_URL/webhook/github" \
+            -H "X-GitHub-Event: pull_request" \
+            -H "content-type: application/json" \
+            -d "{\"action\":\"opened\",\"pull_request\":{\"html_url\":\"$PR_URL\",\"body\":\"Fixes #$ISSUE\"}}"
