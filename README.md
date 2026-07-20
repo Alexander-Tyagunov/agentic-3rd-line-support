@@ -8,6 +8,7 @@
 <br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-6d7cff?style=flat-square)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ff6584?style=flat-square&labelColor=0b0b14)](https://github.com/sponsors/Alexander-Tyagunov)
 ![Google Cloud](https://img.shields.io/badge/Google_Cloud-Cloud_Run_·_Pub%2FSub_·_Firestore-4285F4?style=flat-square&logo=googlecloud&logoColor=white)
 ![Gemini](https://img.shields.io/badge/Gemini_3-Vertex_AI-8b5cf6?style=flat-square&logo=googlegemini&logoColor=white)
 ![Rust](https://img.shields.io/badge/Rust-axum_·_Leptos_WASM-CE422B?style=flat-square&logo=rust&logoColor=white)
@@ -26,9 +27,21 @@
 > triage the problems into fully-written bug tickets, a human approves, and a
 > coding agent opens the pull request — all Google-native, all in one repo.
 
+<div align="center">
+
+### ▶️ One real run, start to finish
+
+</div>
+
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="A planted oversell bug is injected, the monitoring agent detects it, triage writes a full ticket, a human approves, a GitHub issue is filed, and the coding agent opens a fix PR — shown live in the console." width="100%"/>
+</p>
+
+<p align="center"><sub>A planted oversell bug is injected → the <b>monitoring agent</b> detects it → the <b>triage agent</b> writes a full ticket → you approve → the console files <b>GitHub issue #8</b> → its <code>agent-bug</code> label fires a <b>GitHub Action</b> where <b>Gemini</b> writes the fix and opens <b>PR #9</b> (linked to #8, requesting your review, <b>never merged</b>) → the PR flows back into the console. A real end-to-end run, shown across both the console and GitHub.</sub></p>
+
 ---
 
-## ✨ Why you'll want this
+## ✨ What this project is doing
 
 - 🧠 **A real agent team, not a toy.** Two Gemini agents with genuine tool-use loops
   (read logs → correlate → emit findings → dedup → write tickets), plus a coding
@@ -151,6 +164,8 @@ dead-letter queues, and only synthetic data in the logs.
 
 **Built to be understood, run, and torn down.** If it helped you think about
 agentic operations, **give it a ⭐**.
+
+If this reference saved you time, consider **[❤ sponsoring](https://github.com/sponsors/Alexander-Tyagunov)** — it funds more open, end-to-end builds like this.
 
 <sub>MIT licensed · a full-GCP, Gemini-powered reference implementation</sub>
 

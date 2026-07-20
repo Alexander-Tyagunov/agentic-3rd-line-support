@@ -86,6 +86,7 @@ jobs:
         # or a minimal fallback, then append the issue link + the human-gate note.
         env:
           ISSUE: ${{ github.event.issue.number }}
+          OWNER: ${{ github.repository_owner }}
         run: |
           if [ -f pr-body.md ]; then
             DESC="$(cat pr-body.md)"
@@ -98,6 +99,8 @@ jobs:
             echo ""
             echo "---"
             echo "Fixes #${ISSUE}"
+            echo ""
+            echo "Reviewer: @${OWNER}"
             echo ""
             echo "🤖 Autonomous fix from the coding agent. **Human review is the second gate — the agent never approves or merges.**"
             echo "PRBODYEOF"
@@ -122,8 +125,9 @@ jobs:
           commit-message: "Coding agent: fix for #${{ github.event.issue.number }}"
           title: "Agent fix: ${{ github.event.issue.title }} (#${{ github.event.issue.number }})"
           body: ${{ env.PR_BODY }}
-          # Always tag the maintainer as reviewer (human gate) + assignee.
-          reviewers: ${{ github.repository_owner }}
+          # Assign the maintainer (works on personal repos); the formal review
+          # request is done best-effort in a later step (GitHub restricts review
+          # requests to non-author collaborators, which can reject the owner).
           assignees: ${{ github.repository_owner }}
 
       - name: Enforce that a PR was opened
@@ -146,3 +150,13 @@ jobs:
             -H "X-GitHub-Event: pull_request" \
             -H "content-type: application/json" \
             -d "{\"action\":\"opened\",\"pull_request\":{\"html_url\":\"$PR_URL\",\"body\":\"Fixes #$ISSUE\"}}"
+
+      - name: Request the maintainer as reviewer (best-effort, never fails the job)
+        if: ${{ steps.cpr.outputs.pull-request-number != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit "${{ steps.cpr.outputs.pull-request-number }}" \
+            --repo "${{ github.repository }}" \
+            --add-reviewer "${{ github.repository_owner }}" \
+          || echo "::warning::Could not add @${{ github.repository_owner }} as a formal reviewer (GitHub restricts review requests to non-author collaborators). The maintainer is set as assignee and @-mentioned in the PR body."

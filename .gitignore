@@ -51,5 +51,8 @@ venv/
 .workspace/
 .claude/settings.local.json
 
+# ---- Demo GIF build intermediates (the assembled docs/assets/demo.gif IS committed) ----
+docs/assets/demo-frames/
+
 # ---- Personal lecture materials (NEVER push — hard rule) ----
 lecture/
