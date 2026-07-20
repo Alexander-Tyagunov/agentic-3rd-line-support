@@ -2,7 +2,6 @@
 //! See CLAUDE.md ("The known planted bug").
 
 /// Error returned when a reservation cannot be satisfied.
-#[allow(dead_code)] // constructed only once the planted bug is fixed
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReserveError {
     Insufficient { requested: i64, available: i64 },
@@ -26,7 +25,40 @@ impl Inventory {
     /// failing. The correct fix: return `Err(ReserveError::Insufficient)` when
     /// `qty > self.available` and leave stock unchanged — and add a regression test.
     pub fn reserve(&mut self, qty: i64) -> Result<i64, ReserveError> {
+        if qty > self.available {
+            return Err(ReserveError::Insufficient {
+                requested: qty,
+                available: self.available,
+            });
+        }
         self.available -= qty;
         Ok(self.available)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_reserve_success() {
+        let mut inv = Inventory::new(10);
+        assert_eq!(inv.reserve(4), Ok(6));
+        assert_eq!(inv.available, 6);
+    }
+
+    #[test]
+    fn test_reserve_insufficient() {
+        let mut inv = Inventory::new(5);
+        let res = inv.reserve(6);
+        assert_eq!(
+            res,
+            Err(ReserveError::Insufficient {
+                requested: 6,
+                available: 5
+            })
+        );
+        // Stock must remain unchanged
+        assert_eq!(inv.available, 5);
     }
 }
