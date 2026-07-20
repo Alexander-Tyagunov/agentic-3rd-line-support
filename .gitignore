@@ -13,6 +13,7 @@ gha-creds-*.json          # Workload Identity credential file written by google-
 # ---- Coding-agent (GitHub Action) scratch — never belongs in a fix PR ----
 gemini-artifacts/
 .gemini/
+pr-body.md               # agent-authored PR description; consumed by the workflow, not committed
 
 # ---- Terraform ----
 .terraform/

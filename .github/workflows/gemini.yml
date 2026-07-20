@@ -53,15 +53,27 @@ jobs:
           gcp_location: global
           gemini_model: gemini-3.5-flash
           github_issue_number: ${{ github.event.issue.number }}
-          # This is just a sample prompt that could be used here for demo purposes.
           prompt: |
+            You are fixing GitHub issue #${{ github.event.issue.number }}.
             Read GEMINI.md / CLAUDE.md and the runbook referenced in grounding/.
             Find the root cause and implement the SMALLEST correct fix for the
             defect in this issue — change only what the ticket describes. Add or
             update a test that fails before the fix and passes after. Run the
             relevant checks (cargo test + clippy for Rust, pytest for Python).
+
+            Then WRITE a pull-request description to a file named `pr-body.md` in
+            the repo root, using EXACTLY these four markdown sections. Be concise
+            — a few sentences per section, not pages:
+              ## Issue — what is wrong and why it matters (the business impact).
+              ## Fix — what you changed and precisely how it resolves the issue.
+              ## Impact if merged — the effect on the app's code and business
+                 logic, and any risk or behavior change to be aware of.
+              ## Test plan — the regression test you added, how to verify it, and
+                 which checks you ran.
+
             Edit files ONLY — do not run git, do not commit, and do not open a
-            pull request. The workflow opens the PR from your changes.
+            pull request. The workflow opens the PR and uses pr-body.md as its
+            description.
 
       # --- Hard gate: the agent MUST open a PR from its changes ---
       - name: Normalize agent changes to the working tree
@@ -69,14 +81,36 @@ jobs:
         # working tree so the PR step always sees them. No-op if it only edited.
         run: git reset --soft "${{ github.sha }}" || true
 
+      - name: Prepare the PR description
+        # Use the agent-authored pr-body.md (Issue / Fix / Impact / Test plan),
+        # or a minimal fallback, then append the issue link + the human-gate note.
+        env:
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          if [ -f pr-body.md ]; then
+            DESC="$(cat pr-body.md)"
+          else
+            DESC=$'## Issue\nSee #'"$ISSUE"$'.\n\n## Fix\nSee the diff.\n\n## Impact if merged\nScoped to the change in the diff.\n\n## Test plan\nRun the tests for the changed component.'
+          fi
+          {
+            echo "PR_BODY<<PRBODYEOF"
+            echo "$DESC"
+            echo ""
+            echo "---"
+            echo "Fixes #${ISSUE}"
+            echo ""
+            echo "🤖 Autonomous fix from the coding agent. **Human review is the second gate — the agent never approves or merges.**"
+            echo "PRBODYEOF"
+          } >> "$GITHUB_ENV"
+
       - name: Strip agent scratch + credentials
         # The auth action + Gemini CLI drop files into the workspace (a WIF
-        # credentials file, artifact logs, .gemini command defs). Remove and
-        # unstage them so ONLY real source changes land in the PR.
+        # credentials file, artifact logs, .gemini command defs, the pr-body).
+        # Remove and unstage them so ONLY real source changes land in the PR.
         run: |
-          rm -f gha-creds-*.json
+          rm -f gha-creds-*.json pr-body.md
           rm -rf gemini-artifacts .gemini
-          git rm -r --cached --ignore-unmatch 'gha-creds-*.json' gemini-artifacts .gemini >/dev/null 2>&1 || true
+          git rm -r --cached --ignore-unmatch 'gha-creds-*.json' pr-body.md gemini-artifacts .gemini >/dev/null 2>&1 || true
 
       - name: Open pull request
         id: cpr
@@ -87,13 +121,10 @@ jobs:
           delete-branch: true
           commit-message: "Coding agent: fix for #${{ github.event.issue.number }}"
           title: "Agent fix: ${{ github.event.issue.title }} (#${{ github.event.issue.number }})"
-          body: |
-            Autonomous fix from the coding agent for issue #${{ github.event.issue.number }}.
-
-            Fixes #${{ github.event.issue.number }}
-
-            The agent implemented the smallest fix plus a regression test.
-            **Human review is the second gate — do not auto-merge.**
+          body: ${{ env.PR_BODY }}
+          # Always tag the maintainer as reviewer (human gate) + assignee.
+          reviewers: ${{ github.repository_owner }}
+          assignees: ${{ github.repository_owner }}
 
       - name: Enforce that a PR was opened
         if: ${{ steps.cpr.outputs.pull-request-number == '' }}
