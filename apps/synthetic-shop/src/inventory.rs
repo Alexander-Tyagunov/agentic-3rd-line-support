@@ -26,7 +26,49 @@ impl Inventory {
     /// failing. The correct fix: return `Err(ReserveError::Insufficient)` when
     /// `qty > self.available` and leave stock unchanged — and add a regression test.
     pub fn reserve(&mut self, qty: i64) -> Result<i64, ReserveError> {
+        if qty > self.available {
+            return Err(ReserveError::Insufficient {
+                requested: qty,
+                available: self.available,
+            });
+        }
         self.available -= qty;
         Ok(self.available)
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::panic, clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_reserve_sufficient_stock() {
+        let mut inv = Inventory::new(10);
+        let res = inv.reserve(4);
+        assert_eq!(res, Ok(6));
+        assert_eq!(inv.available, 6);
+    }
+
+    #[test]
+    fn test_reserve_insufficient_stock() {
+        let mut inv = Inventory::new(3);
+        let res = inv.reserve(5);
+        assert_eq!(
+            res,
+            Err(ReserveError::Insufficient {
+                requested: 5,
+                available: 3
+            })
+        );
+        assert_eq!(inv.available, 3);
+    }
+
+    #[test]
+    fn test_reserve_exact_stock() {
+        let mut inv = Inventory::new(5);
+        let res = inv.reserve(5);
+        assert_eq!(res, Ok(0));
+        assert_eq!(inv.available, 0);
     }
 }
