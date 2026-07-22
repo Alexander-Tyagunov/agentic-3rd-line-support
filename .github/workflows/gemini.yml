@@ -9,9 +9,14 @@
 
 name: Coding Agent (Gemini)
 
+# Trigger only on `labeled` (not `opened`): creating an issue that already carries
+# the `agent-bug` label — which is exactly what the console does on Approve & fix —
+# emits BOTH `opened` and `labeled` webhooks, which would otherwise fire two
+# redundant agent runs for one approval. `labeled` alone fires exactly once,
+# whether the label is applied at creation or added later.
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
   issue_comment:
     types: [created]
 
@@ -29,7 +34,7 @@ jobs:
   gemini:
     # Run for issues labeled `agent-bug`, or a human `@gemini-cli` mention.
     if: |
-      (github.event_name == 'issues' && contains(join(github.event.issue.labels.*.name, ','), 'agent-bug')) ||
+      (github.event_name == 'issues' && github.event.label.name == 'agent-bug') ||
       (github.event_name == 'issue_comment' && github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '@gemini-cli'))
     runs-on: ubuntu-latest
     timeout-minutes: 20 # cost guard
