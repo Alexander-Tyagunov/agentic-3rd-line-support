@@ -26,7 +26,40 @@ impl Inventory {
     /// failing. The correct fix: return `Err(ReserveError::Insufficient)` when
     /// `qty > self.available` and leave stock unchanged — and add a regression test.
     pub fn reserve(&mut self, qty: i64) -> Result<i64, ReserveError> {
+        if qty > self.available {
+            return Err(ReserveError::Insufficient {
+                requested: qty,
+                available: self.available,
+            });
+        }
         self.available -= qty;
         Ok(self.available)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_reserve_success() {
+        let mut inv = Inventory::new(10);
+        assert_eq!(inv.reserve(4), Ok(6));
+        assert_eq!(inv.available, 6);
+    }
+
+    #[test]
+    fn test_reserve_insufficient() {
+        let mut inv = Inventory::new(3);
+        let res = inv.reserve(5);
+        assert_eq!(
+            res,
+            Err(ReserveError::Insufficient {
+                requested: 5,
+                available: 3
+            })
+        );
+        // Ensure stock remains unchanged
+        assert_eq!(inv.available, 3);
     }
 }
